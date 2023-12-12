@@ -1,7 +1,7 @@
 package http
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"github.com/imroc/req/v3"
 )
 
