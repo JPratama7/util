@@ -11,3 +11,7 @@ func NilBool() *bool {
 func NilInt() *int {
 	return nil
 }
+
+func NilStruct() *struct{} {
+	return nil
+}
