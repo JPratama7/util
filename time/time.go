@@ -40,3 +40,7 @@ func AddHour(t time.Time) (v time.Time) {
 func AddHours(t time.Time, n int) (v time.Time) {
 	return carbon.FromStdTime(t).AddHours(n).ToStdTime()
 }
+
+func ConvertToDuration(t time.Time) (v time.Duration) {
+	return time.Until(t)
+}
