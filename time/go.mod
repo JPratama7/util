@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/golang-module/carbon v1.7.3
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 )
 
 require (

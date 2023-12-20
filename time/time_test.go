@@ -7,7 +7,7 @@ import (
 )
 
 func TestNowReturnsCurrentTime(t *testing.T) {
-	result := time.Now()
+	result := Now()
 	assert.WithinDuration(t, time.Now(), result, 1*time.Second)
 }
 
@@ -64,5 +64,26 @@ func TestAddHoursAddsCorrectly(t *testing.T) {
 	now := time.Now()
 	result := AddHours(now, 3)
 	expected := now.Add(3 * time.Hour)
+	assert.Equal(t, expected, result)
+}
+
+func TestConvertToDurationReturnsCorrectDurationForFutureTime(t *testing.T) {
+	futureTime := time.Now().Add(3 * time.Hour)
+	result := ConvertToDuration(futureTime)
+	expected := 3 * time.Hour
+	assert.Equal(t, expected, result)
+}
+
+func TestConvertToDurationReturnsCorrectDurationForPastTime(t *testing.T) {
+	pastTime := time.Now().Add(-3 * time.Hour)
+	result := ConvertToDuration(pastTime)
+	expected := -3 * time.Hour
+	assert.Equal(t, expected, result)
+}
+
+func TestConvertToDurationReturnsZeroForCurrentTime(t *testing.T) {
+	currentTime := time.Now()
+	result := ConvertToDuration(currentTime)
+	expected := 0 * time.Hour
 	assert.Equal(t, expected, result)
 }
