@@ -1,4 +1,4 @@
-module github.com/JPratama7/util/time
+module jpratama7.github.io/util/time
 
 go 1.21
 

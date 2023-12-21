@@ -1,3 +1,3 @@
-module github.com/JPratama7/util
+module jpratama7.github.io/util
 
 go 1.21
