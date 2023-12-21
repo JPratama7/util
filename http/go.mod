@@ -1,4 +1,4 @@
-module jpratama7.github.io/util/http
+module github.com/JPratama7/util/http
 
 go 1.21
 

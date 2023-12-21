@@ -1,4 +1,4 @@
-module jpratama7.github.io/util/gorm
+module github.com/JPratama7/util/gorm
 
 go 1.21
 
