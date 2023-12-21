@@ -21,7 +21,3 @@ func (p *Pool[T]) Get() T {
 func (p *Pool[T]) Put(x T) {
 	p.m.Put(x)
 }
-
-func (p *Pool[T]) name() {
-	p.m.New()
-}
