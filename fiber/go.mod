@@ -5,6 +5,7 @@ go 1.21.0
 toolchain go1.21.5
 
 require (
+	github.com/JPratama7/util v0.1.3
 	github.com/gofiber/fiber/v2 v2.51.0
 	gorm.io/gorm v1.25.5
 )

@@ -2,7 +2,10 @@ module github.com/JPratama7/util/token
 
 go 1.21
 
-require github.com/whatsauth/watoken v0.1.6
+require (
+	github.com/JPratama7/util v0.1.3
+	github.com/whatsauth/watoken v0.1.6
+)
 
 require (
 	aidanwoods.dev/go-paseto v1.5.1 // indirect
