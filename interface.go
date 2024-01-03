@@ -1,4 +1,4 @@
-package fiber
+package util
 
 type Token[ID ~string, T IdGetter[ID]] interface {
 	Create(T) (ID, error)
