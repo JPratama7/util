@@ -19,6 +19,11 @@ func (r *Generator[ID, T]) Decode(token string) (data T, err error) {
 	return
 }
 
+func (r *Generator[ID, T]) FullDecode(token string) (data watoken.Payload[T], err error) {
+	data, err = watoken.DecodeWithStruct[T](r.public, token)
+	return
+}
+
 func (r *Generator[ID, T]) GetId(token string) (id ID, err error) {
 	payload, err := watoken.Decode(r.public, token)
 	if err != nil {
