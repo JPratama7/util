@@ -7,6 +7,14 @@ type Pool[T any] struct {
 }
 
 func NewPool[T any](f func() T) *Pool[T] {
+	if f == nil {
+		return &Pool[T]{
+			m: &sync.Pool{
+				New: func() any { return defaultAlloc[T]() },
+			},
+		}
+	}
+
 	return &Pool[T]{
 		m: &sync.Pool{
 			New: func() any { return f() },
