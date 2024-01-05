@@ -1,6 +1,8 @@
 package sync
 
-import "sync"
+import (
+	"sync"
+)
 
 type Pool[T any] struct {
 	m *sync.Pool
