@@ -3,7 +3,7 @@ module github.com/JPratama7/util/time
 go 1.21
 
 require (
-	github.com/golang-module/carbon/v2 v2.3.2
+	github.com/golang-module/carbon/v2 v2.3.3
 	github.com/stretchr/testify v1.8.4
 )
 

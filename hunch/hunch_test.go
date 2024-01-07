@@ -36,15 +36,15 @@ func TestTake_ShouldWorksAsExpected(t *testing.T) {
 			rootCtx,
 			3,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
-				<-time.After(300 * time.Millisecond)
+				<-time.After(300 * time.Nanosecond)
 				return 3, nil
 			},
 		)
@@ -118,15 +118,15 @@ func TestTake_ShouldLimitResults(t *testing.T) {
 			rootCtx,
 			2,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
-				<-time.After(300 * time.Millisecond)
+				<-time.After(300 * time.Nanosecond)
 				return 3, nil
 			},
 		)
@@ -157,15 +157,15 @@ func TestTake_ShouldCancelWhenOneExecutableReturnedError(t *testing.T) {
 			rootCtx,
 			3,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 0, AppError{}
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 3, nil
 			},
 		)
@@ -193,18 +193,18 @@ func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
 			rootCtx,
 			3,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
 				select {
 				case <-ctx.Done():
 					return 0, AppError{}
-				case <-time.After(300 * time.Millisecond):
+				case <-time.After(300 * time.Nanosecond):
 					return 3, nil
 				}
 			},
@@ -215,7 +215,7 @@ func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
 	}()
 
 	go func() {
-		time.Sleep(150 * time.Millisecond)
+		time.Sleep(150 * time.Nanosecond)
 		cancel()
 	}()
 
@@ -237,15 +237,15 @@ func TestAll_ShouldWorksAsExpected(t *testing.T) {
 		r, err := All(
 			rootCtx,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
-				<-time.After(300 * time.Millisecond)
+				<-time.After(300 * time.Nanosecond)
 				return 3, nil
 			},
 		)
@@ -279,15 +279,15 @@ func TestAll_WhenOutOfOrder(t *testing.T) {
 		r, err := All[int](
 			rootCtx,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(300 * time.Millisecond)
+				time.Sleep(300 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
-				<-time.After(100 * time.Millisecond)
+				<-time.After(100 * time.Nanosecond)
 				return 3, nil
 			},
 		)
@@ -321,18 +321,18 @@ func TestAll_WhenRootCtxCanceled(t *testing.T) {
 		r, err := All(
 			rootCtx,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
 				select {
 				case <-ctx.Done():
 					return 0, AppError{}
-				case <-time.After(300 * time.Millisecond):
+				case <-time.After(300 * time.Nanosecond):
 					return 3, nil
 				}
 			},
@@ -343,7 +343,7 @@ func TestAll_WhenRootCtxCanceled(t *testing.T) {
 	}()
 
 	go func() {
-		time.Sleep(150 * time.Millisecond)
+		time.Sleep(150 * time.Nanosecond)
 		cancel()
 	}()
 
@@ -367,15 +367,15 @@ func TestAll_WhenAnySubFunctionFailed(t *testing.T) {
 		r, err := All(
 			rootCtx,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(300 * time.Millisecond)
+				time.Sleep(300 * time.Nanosecond)
 				return 0, AppError{}
 			},
 		)
@@ -413,7 +413,7 @@ func TestRetry_WithNoFailure(t *testing.T) {
 			func(ctx context.Context) (int, error) {
 				times++
 
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return expect, nil
 			},
 		)
@@ -446,15 +446,15 @@ func TestLast_ShouldWorksAsExpected(t *testing.T) {
 			rootCtx,
 			2,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 2, nil
 			},
 			func(ctx context.Context) (int, error) {
-				<-time.After(300 * time.Millisecond)
+				<-time.After(300 * time.Nanosecond)
 				return 3, nil
 			},
 		)
@@ -488,16 +488,16 @@ func TestWaterfall_ShouldWorksAsExpected(t *testing.T) {
 		r, err := Waterfall(
 			rootCtx,
 			func(ctx context.Context, n int) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				return 1, nil
 			},
 			func(ctx context.Context, n int) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				n = n + 1
 				return n, nil
 			},
 			func(ctx context.Context, n int) (int, error) {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(100 * time.Nanosecond)
 				n = n + 1
 				return n, nil
 			},
@@ -527,7 +527,7 @@ func TestRetry_ShouldReturnsOnSuccess(t *testing.T) {
 			rootCtx,
 			3,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(200 * time.Nanosecond)
 				return 1, nil
 			},
 		)
@@ -625,7 +625,7 @@ func TestRetry_WhenRootCtxCanceled(t *testing.T) {
 			rootCtx,
 			3,
 			func(ctx context.Context) (int, error) {
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(50 * time.Nanosecond)
 				return 0, fmt.Errorf("err")
 			},
 		)
@@ -634,7 +634,7 @@ func TestRetry_WhenRootCtxCanceled(t *testing.T) {
 		close(ch)
 	}()
 	go func() {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(10 * time.Nanosecond)
 		cancel()
 	}()
 

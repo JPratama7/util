@@ -41,6 +41,11 @@ func AddHours(t time.Time, n int) (v time.Time) {
 	return carbon.CreateFromStdTime(t).AddHours(n).ToStdTime()
 }
 
-func ConvertToDuration(t time.Time) (v time.Duration) {
-	return time.Until(t)
+func ConvertToDuration(t time.Time, round ...time.Duration) (v time.Duration) {
+	rounder := time.Second
+	if len(round) > 0 {
+		rounder = round[0]
+	}
+
+	return time.Until(t).Round(rounder)
 }
