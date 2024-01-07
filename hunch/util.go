@@ -57,7 +57,7 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[
 	close(output)
 }
 
-func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num int, output chan IndexedExecutableOutput[T]) {
+func takeUntilEnough[T any](fail chan<- error, success chan<- []IndexedValue[T], num int, output <-chan IndexedExecutableOutput[T], done chan<- bool, takeVal bool) {
 	uVals := make([]IndexedValue[T], 0, num)
 
 	enough := false
@@ -73,6 +73,10 @@ func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num
 			break
 		}
 
+		if !takeVal {
+			continue
+		}
+
 		uVals = append(uVals, r.Value)
 		outputCount++
 
@@ -82,7 +86,7 @@ func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num
 			break
 		}
 	}
-	fail <- nil
+	done <- true
 }
 
 func initVal[T any]() T {

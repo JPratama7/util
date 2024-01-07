@@ -42,8 +42,9 @@ func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]
 	go runExecs(ctx, output, execs)
 
 	fail := make(chan error, 1)
+	done := make(chan bool)
 	success := make(chan []IndexedValue[T], 1)
-	go takeUntilEnough(fail, success, min(len(execs), num), output)
+	go takeUntilEnough(fail, success, min(len(execs), num), output, done, true)
 
 	select {
 
@@ -61,6 +62,10 @@ func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]
 	case uVals := <-success:
 		cancel()
 		return pluckVals(uVals), nil
+
+	case <-done:
+		cancel()
+		return nil, nil
 	}
 }
 
@@ -71,11 +76,12 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 	defer cancel()
 
 	output := make(chan IndexedExecutableOutput[T], 1)
-	go runExecs(ctx, output, execs)
-
 	fail := make(chan error, 1)
 	success := make(chan []IndexedValue[T], 1)
-	go takeUntilEnough(fail, success, len(execs), output)
+	done := make(chan bool)
+
+	go runExecs(ctx, output, execs)
+	go takeUntilEnough(fail, success, len(execs), output, done, true)
 
 	select {
 
@@ -91,6 +97,10 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 
 	case uVals := <-success:
 		return pluckVals(sortIdxVals(uVals)), nil
+
+	case <-done:
+		cancel()
+		return nil, nil
 	}
 }
 
@@ -103,9 +113,10 @@ func Throw[T any](parentCtx context.Context, execs ...Executable[T]) error {
 	output := make(chan IndexedExecutableOutput[T], 1)
 	fail := make(chan error, 1)
 	success := make(chan []IndexedValue[T], 1)
+	done := make(chan bool)
 
 	go runExecs(ctx, output, execs)
-	go takeUntilEnough(fail, success, len(execs), output)
+	go takeUntilEnough(fail, success, len(execs), output, done, false)
 
 	select {
 
@@ -118,6 +129,10 @@ func Throw[T any](parentCtx context.Context, execs ...Executable[T]) error {
 			return parentCtxErr
 		}
 		return err
+
+	case <-done:
+		cancel()
+		return nil
 	}
 }
 
