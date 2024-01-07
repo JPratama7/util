@@ -4,8 +4,6 @@ package hunch
 import (
 	"context"
 	"fmt"
-	"sort"
-	"sync"
 )
 
 // Executable represents a singular logic block.
@@ -26,35 +24,6 @@ type IndexedValue[T any] struct {
 type IndexedExecutableOutput[T any] struct {
 	Value IndexedValue[T]
 	Err   error
-}
-
-func pluckVals[T any](iVals []IndexedValue[T]) []T {
-	vals := make([]T, 0, len(iVals))
-	for _, val := range iVals {
-		vals = append(vals, val.Value)
-	}
-
-	return vals
-}
-
-func sortIdxVals[T any](iVals []IndexedValue[T]) []IndexedValue[T] {
-	sorted := make([]IndexedValue[T], len(iVals))
-	copy(sorted, iVals)
-	//slices.SortFunc(
-	//	sorted,
-	//	func(i, j IndexedValue[T]) int {
-	//		return cmp.Compare(i.Index, j.Index)
-	//	},
-	//)
-
-	sort.SliceStable(
-		sorted,
-		func(i, j int) bool {
-			return sorted[i].Index < sorted[j].Index
-		},
-	)
-
-	return sorted
 }
 
 // Take returns the first `num` values outputted by the Executables.
@@ -92,66 +61,6 @@ func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]
 	case uVals := <-success:
 		cancel()
 		return pluckVals(uVals), nil
-	}
-}
-
-func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[T], execs []Executable[T]) {
-	var wg sync.WaitGroup
-	for i, exec := range execs {
-		wg.Add(1)
-
-		go func(i int, exec Executable[T]) {
-			defer wg.Done()
-
-			data := IndexedExecutableOutput[T]{}
-
-			defer func() {
-				if r := recover(); r != nil {
-					data.Err = fmt.Errorf("panic: %v", r)
-					output <- data
-				}
-
-				output <- data
-			}()
-
-			val, err := exec(ctx)
-			if err != nil {
-				data.Err = err
-				return
-			}
-
-			data.Value = IndexedValue[T]{i, val}
-			return
-		}(i, exec)
-	}
-
-	wg.Wait()
-	close(output)
-}
-
-func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num int, output chan IndexedExecutableOutput[T]) {
-	uVals := make([]IndexedValue[T], 0, num)
-
-	enough := false
-	outputCount := 0
-	for r := range output {
-		if enough {
-			return
-		}
-
-		if r.Err != nil {
-			enough = true
-			fail <- r.Err
-			continue
-		}
-
-		uVals = append(uVals, r.Value)
-
-		if outputCount == num {
-			enough = true
-			success <- uVals
-			continue
-		}
 	}
 }
 
@@ -226,7 +135,7 @@ func (err MaxRetriesExceededError) Error() string {
 }
 
 // Retry attempts to get a value from an Executable instead of an Error.
-// It will keeps re-running the Executable when failed no more than `retries` times.
+// It will keep re-running the Executable when failed no more than `retries` times.
 // Also, when the parent Context canceled, it returns the `Err()` of it immediately.
 func Retry[T any](parentCtx context.Context, retries int, fn Executable[T]) (T, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -250,18 +159,18 @@ func Retry[T any](parentCtx context.Context, retries int, fn Executable[T]) (T, 
 		//
 		case <-parentCtx.Done():
 			// Stub comment to fix a test coverage bug.
-			return *new(T), parentCtx.Err()
+			return initVal[T](), parentCtx.Err()
 
 		case <-fail:
 			if parentCtxErr := parentCtx.Err(); parentCtxErr != nil {
-				return *new(T), parentCtxErr
+				return initVal[T](), parentCtxErr
 			}
 
 			c++
 			if retries == 0 || c < retries {
 				continue
 			}
-			return *new(T), MaxRetriesExceededError{c}
+			return initVal[T](), MaxRetriesExceededError{c}
 
 		case val := <-success:
 			return val, nil
@@ -297,14 +206,14 @@ func Waterfall[T any](parentCtx context.Context, execs ...ExecutableInSequence[T
 
 		case <-parentCtx.Done():
 			// Stub comment to fix a test coverage bug.
-			return *new(T), parentCtx.Err()
+			return initVal[T](), parentCtx.Err()
 
 		case err := <-fail:
 			if parentCtxErr := parentCtx.Err(); parentCtxErr != nil {
-				return *new(T), parentCtxErr
+				return initVal[T](), parentCtxErr
 			}
 
-			return *new(T), err
+			return initVal[T](), err
 
 		case val := <-success:
 			lastVal = val
