@@ -156,15 +156,15 @@ func TestTake_ShouldCancelWhenOneExecutableReturnedError(t *testing.T) {
 		r, err := Take(
 			rootCtx,
 			3,
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(100 * time.Millisecond)
 				return 1, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(200 * time.Millisecond)
 				return 0, AppError{}
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(200 * time.Millisecond)
 				return 3, nil
 			},
@@ -175,7 +175,7 @@ func TestTake_ShouldCancelWhenOneExecutableReturnedError(t *testing.T) {
 	}()
 
 	r := <-ch
-	if !isSlice(r.Val) || len(r.Val.([]interface{})) != 0 {
+	if !isSlice(r.Val) || len(r.Val.([]int)) != 0 {
 		t.Errorf("Return Value should be default, gets: \"%v\"\n", r.Val)
 	}
 	if r.Err == nil {
@@ -192,18 +192,18 @@ func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
 		r, err := Take(
 			rootCtx,
 			3,
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(100 * time.Millisecond)
 				return 1, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(200 * time.Millisecond)
 				return 2, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				select {
 				case <-ctx.Done():
-					return nil, AppError{}
+					return 0, AppError{}
 				case <-time.After(300 * time.Millisecond):
 					return 3, nil
 				}
@@ -220,7 +220,7 @@ func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
 	}()
 
 	r := <-ch
-	if !isSlice(r.Val) || len(r.Val.([]interface{})) != 0 {
+	if !isSlice(r.Val) || len(r.Val.([]int)) != 0 {
 		t.Errorf("Return Value should be default, gets: \"%v\"\n", r.Val)
 	}
 	if r.Err == nil {
@@ -236,15 +236,15 @@ func TestAll_ShouldWorksAsExpected(t *testing.T) {
 	go func() {
 		r, err := All(
 			rootCtx,
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(200 * time.Millisecond)
 				return 1, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(100 * time.Millisecond)
 				return 2, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				<-time.After(300 * time.Millisecond)
 				return 3, nil
 			},
@@ -259,10 +259,8 @@ func TestAll_ShouldWorksAsExpected(t *testing.T) {
 		t.Errorf("Gets an error: %v\n", r.Err)
 	}
 
-	rs := []int{}
-	for _, v := range r.Val.([]interface{}) {
-		rs = append(rs, v.(int))
-	}
+	var rs []int
+	rs = append(rs, r.Val.([]int)...)
 
 	equal := reflect.DeepEqual([]int{1, 2, 3}, rs)
 	if !equal {
@@ -278,15 +276,15 @@ func TestAll_WhenOutOfOrder(t *testing.T) {
 	go func() {
 		r, err := All(
 			rootCtx,
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(200 * time.Millisecond)
 				return 1, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				time.Sleep(300 * time.Millisecond)
 				return 2, nil
 			},
-			func(ctx context.Context) (interface{}, error) {
+			func(ctx context.Context) (int, error) {
 				<-time.After(100 * time.Millisecond)
 				return 3, nil
 			},
@@ -301,10 +299,8 @@ func TestAll_WhenOutOfOrder(t *testing.T) {
 		t.Errorf("Gets an error: %v\n", r.Err)
 	}
 
-	rs := []int{}
-	for _, v := range r.Val.([]interface{}) {
-		rs = append(rs, v.(int))
-	}
+	var rs []int
+	rs = append(rs, r.Val.([]int)...)
 
 	equal := reflect.DeepEqual([]int{1, 2, 3}, rs)
 	if !equal {

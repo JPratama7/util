@@ -6,24 +6,8 @@ import (
 	"sync"
 )
 
-var (
-	once       sync.Once
-	poolerList sync.Pool
-)
-
-func init() {
-	once.Do(func() {
-		poolerList.New = func() interface{} {
-			return make([]any, 0)
-		}
-	})
-}
-
 func pluckVals[T any](iVals []IndexedValue[T]) []T {
-	//vals := make([]T, 0, len(iVals))
-
-	vals := poolerList.Get().([]T)
-	defer poolerList.Put(vals)
+	vals := make([]T, 0, len(iVals))
 
 	for _, val := range iVals {
 		vals = append(vals, val.Value)
@@ -55,14 +39,17 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[
 
 			temp := IndexedExecutableOutput[T]{}
 
+			defer func() {
+				output <- temp
+			}()
+
 			val, err := exec(ctx)
 			if err != nil {
 				temp.Err = err
-				output <- temp
 				return
 			}
+
 			temp.Value = IndexedValue[T]{i, val}
-			output <- temp
 		}(i, exec)
 	}
 
