@@ -10,7 +10,7 @@ func BenchmarkTakeWithOnlyOne(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Take(
+		Take[int](
 			rootCtx,
 			1,
 			func(ctx context.Context) (int, error) {

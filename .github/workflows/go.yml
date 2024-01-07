@@ -2,15 +2,35 @@ name: Test
 on: [push]
 
 jobs:
-  build:
+  Util:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.21.x'
+      - name: Install dependencies
+        run: go get .
+      - name: Test with the Go CLI
+        run: go test ./...
+
+  Utils:
+    strategy:
+      matrix:
+        build: [
+          fiber, gorm, http, hunch, time, token
+        ]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21.x'
+      - name: enter the directory
+        run: cd ${{ matrix.build }}
       - name: Install dependencies
         run: go get .
       - name: Test with the Go CLI

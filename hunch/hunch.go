@@ -102,11 +102,25 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[
 
 		go func(i int, exec Executable[T]) {
 			defer wg.Done()
+
+			data := IndexedExecutableOutput[T]{}
+
+			defer func() {
+				if r := recover(); r != nil {
+					data.Err = fmt.Errorf("panic: %v", r)
+					output <- data
+				}
+
+				output <- data
+			}()
+
 			val, err := exec(ctx)
-			output <- IndexedExecutableOutput[T]{
-				IndexedValue[T]{i, val},
-				err,
+			if err != nil {
+				data.Err = err
+				return
 			}
+
+			data.Value = IndexedValue[T]{i, val}
 			return
 		}(i, exec)
 	}
