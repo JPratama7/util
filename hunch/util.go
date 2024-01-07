@@ -7,9 +7,8 @@ import (
 )
 
 var (
-	once               sync.Once
-	poolerList         sync.Pool
-	poolerIndexedValue sync.Pool
+	once       sync.Once
+	poolerList sync.Pool
 )
 
 func init() {
@@ -17,11 +16,6 @@ func init() {
 		poolerList.New = func() interface{} {
 			return make([]any, 0)
 		}
-
-		poolerIndexedValue.New = func() interface{} {
-			return IndexedValue[any]{}
-		}
-
 	})
 }
 
