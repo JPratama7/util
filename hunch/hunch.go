@@ -84,15 +84,40 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 		return nil, parentCtx.Err()
 
 	case err := <-fail:
-		cancel()
 		if parentCtxErr := parentCtx.Err(); parentCtxErr != nil {
 			return nil, parentCtxErr
 		}
 		return nil, err
 
 	case uVals := <-success:
-		cancel()
 		return pluckVals(sortIdxVals(uVals)), nil
+	}
+}
+
+// Throw execute and ignore all the outputs from all Executables.
+func Throw[T any](parentCtx context.Context, execs ...Executable[T]) error {
+	// Create a new sub-context for possible cancelation.
+	ctx, cancel := context.WithCancel(parentCtx)
+	defer cancel()
+
+	output := make(chan IndexedExecutableOutput[T], 1)
+	fail := make(chan error, 1)
+	success := make(chan []IndexedValue[T], 1)
+
+	go runExecs(ctx, output, execs)
+	go takeUntilEnough(fail, success, len(execs), output)
+
+	select {
+
+	case <-parentCtx.Done():
+		// Stub comment to fix a test coverage bug.
+		return parentCtx.Err()
+
+	case err := <-fail:
+		if parentCtxErr := parentCtx.Err(); parentCtxErr != nil {
+			return parentCtxErr
+		}
+		return err
 	}
 }
 

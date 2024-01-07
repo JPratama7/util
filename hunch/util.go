@@ -82,6 +82,7 @@ func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num
 			break
 		}
 	}
+	fail <- nil
 }
 
 func initVal[T any]() T {

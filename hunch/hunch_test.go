@@ -640,6 +640,58 @@ func TestRetry_WhenRootCtxCanceled(t *testing.T) {
 	}
 }
 
+func TestThrow_ShouldReturnParentContextErrorWhenParentContextIsDone(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel the context immediately
+
+	err := Throw(ctx, func(ctx context.Context) (int, error) {
+		time.Sleep(100 * time.Millisecond)
+		return 1, nil
+	})
+
+	if err != context.Canceled {
+		t.Errorf("Expected context.Canceled, but got: %v", err)
+	}
+}
+
+func TestThrow_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	err := Throw(ctx, func(ctx context.Context) (int, error) {
+		return 0, fmt.Errorf("executable error")
+	})
+
+	if err == nil || err.Error() != "executable error" {
+		t.Errorf("Expected 'executable error', but got: %v", err)
+	}
+}
+
+func TestThrow_ShouldReturnNilWhenAllExecutablesSucceed(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	err := Throw(ctx,
+		func(ctx context.Context) (int, error) {
+			return 1, nil
+		},
+		func(ctx context.Context) (int, error) {
+			return 2, nil
+		},
+		func(ctx context.Context) (int, error) {
+			return 3, nil
+		},
+	)
+
+	if err != nil {
+		t.Errorf("Expected nil, but got: %v", err)
+	}
+}
+
 func TestMin(t *testing.T) {
 	t.Parallel()
 
