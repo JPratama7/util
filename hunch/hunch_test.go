@@ -259,7 +259,7 @@ func TestAll_ShouldWorksAsExpected(t *testing.T) {
 		t.Errorf("Gets an error: %v\n", r.Err)
 	}
 
-	rs := []int{}
+	var rs []int
 	for _, v := range r.Val.([]interface{}) {
 		rs = append(rs, v.(int))
 	}
@@ -301,7 +301,7 @@ func TestAll_WhenOutOfOrder(t *testing.T) {
 		t.Errorf("Gets an error: %v\n", r.Err)
 	}
 
-	rs := []int{}
+	var rs []int
 	for _, v := range r.Val.([]interface{}) {
 		rs = append(rs, v.(int))
 	}

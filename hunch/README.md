@@ -9,13 +9,13 @@
 #### `go get`
 
 ```shell
-$ go get -u -v github.com/aaronjan/hunch
+$ go get -u -v github.com/JPratama7/util/hunch
 ```
 
 #### `go mod` (Recommended)
 
 ```go
-import "github.com/aaronjan/hunch"
+import "github.com/JPratama7/util/hunch"
 ```
 
 ```shell
@@ -25,9 +25,9 @@ $ go mod tidy
 ### Types
 
 ```go
-type Executable func(context.Context) (interface{}, error)
+type Executable[T any] func(context.Context) (T, error)
 
-type ExecutableInSequence func(context.Context, interface{}) (interface{}, error)
+type ExecutableInSequence[T any] func(context.Context, T) (T, error)
 ```
 
 ### API
@@ -35,7 +35,7 @@ type ExecutableInSequence func(context.Context, interface{}) (interface{}, error
 #### All
 
 ```go
-func All(parentCtx context.Context, execs ...Executable) ([]interface{}, error) 
+func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error)
 ```
 
 All returns all the outputs from all Executables, order guaranteed.
@@ -44,17 +44,17 @@ All returns all the outputs from all Executables, order guaranteed.
 
 ```go
 ctx := context.Background()
-r, err := hunch.All(
+r, err := hunch.All[int](
     ctx,
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(300 * time.Millisecond)
         return 1, nil
     },
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(200 * time.Millisecond)
         return 2, nil
     },
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(100 * time.Millisecond)
         return 3, nil
     },
@@ -68,7 +68,7 @@ fmt.Println(r, err)
 #### Take
 
 ```go
-func Take(parentCtx context.Context, num int, execs ...Executable) ([]interface{}, error)
+func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]T, error)
 ```
 
 Take returns the first `num` values outputted by the Executables.
@@ -77,19 +77,19 @@ Take returns the first `num` values outputted by the Executables.
 
 ```go
 ctx := context.Background()
-r, err := hunch.Take(
+r, err := hunch.Take[int](
     ctx,
     // Only need the first 2 values.
     2,
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(300 * time.Millisecond)
         return 1, nil
     },
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(200 * time.Millisecond)
         return 2, nil
     },
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(100 * time.Millisecond)
         return 3, nil
     },
@@ -103,7 +103,7 @@ fmt.Println(r, err)
 #### Last
 
 ```go
-func Last(parentCtx context.Context, num int, execs ...Executable) ([]interface{}, error)
+func Last[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]T, error)
 ```
 
 Last returns the last `num` values outputted by the Executables.
@@ -112,19 +112,19 @@ Last returns the last `num` values outputted by the Executables.
 
 ```go
 ctx := context.Background()
-r, err := hunch.Last(
+r, err := hunch.Last[int](
     ctx,
     // Only need the last 2 values.
     2,
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(300 * time.Millisecond)
         return 1, nil
     },
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(200 * time.Millisecond)
         return 2, nil
     },
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         time.Sleep(100 * time.Millisecond)
         return 3, nil
     },
@@ -138,7 +138,7 @@ fmt.Println(r, err)
 #### Waterfall
 
 ```go
-func Waterfall(parentCtx context.Context, execs ...ExecutableInSequence) (interface{}, error)
+func Waterfall[T any](parentCtx context.Context, execs ...ExecutableInSequence[T]) (T, error)
 ```
 
 Waterfall runs `ExecutableInSequence`s one by one, passing previous result to next Executable as input. When an error occurred, it stop the process then returns the error. When the parent Context canceled, it returns the `Err()` of it immediately.
@@ -147,15 +147,15 @@ Waterfall runs `ExecutableInSequence`s one by one, passing previous result to ne
 
 ```go
 ctx := context.Background()
-r, err := hunch.Waterfall(
+r, err := hunch.Waterfall[int](
     ctx,
-    func(ctx context.Context, n interface{}) (interface{}, error) {
+    func(ctx context.Context, n int) (int, error) {
         return 1, nil
     },
-    func(ctx context.Context, n interface{}) (interface{}, error) {
+    func(ctx context.Context, n int) (int, error) {
         return n.(int) + 1, nil
     },
-    func(ctx context.Context, n interface{}) (interface{}, error) {
+    func(ctx context.Context, n int) (int, error) {
         return n.(int) + 1, nil
     },
 )
@@ -168,7 +168,7 @@ fmt.Println(r, err)
 #### Retry
 
 ```go
-func Retry(parentCtx context.Context, retries int, fn Executable) (interface{}, error)
+func Retry[T any](parentCtx context.Context, retries int, fn Executable[T]) (T, error)
 ```
 
 Retry attempts to get a value from an Executable instead of an Error. It will keeps re-running the Executable when failed no more than `retries` times. Also, when the parent Context canceled, it returns the `Err()` of it immediately.
@@ -187,10 +187,10 @@ getStuffFromAPI := func() (int, error) {
 }
 
 ctx := context.Background()
-r, err := hunch.Retry(
+r, err := hunch.Retry[int](
     ctx,
     10,
-    func(ctx context.Context) (interface{}, error) {
+    func(ctx context.Context) (int, error) {
         rs, err := getStuffFromAPI()
 
         return rs, err

@@ -29,7 +29,7 @@ type IndexedExecutableOutput[T any] struct {
 }
 
 func pluckVals[T any](iVals []IndexedValue[T]) []T {
-	vals := []T{}
+	vals := make([]T, 0, len(iVals))
 	for _, val := range iVals {
 		vals = append(vals, val.Value)
 	}
@@ -40,6 +40,13 @@ func pluckVals[T any](iVals []IndexedValue[T]) []T {
 func sortIdxVals[T any](iVals []IndexedValue[T]) []IndexedValue[T] {
 	sorted := make([]IndexedValue[T], len(iVals))
 	copy(sorted, iVals)
+	//slices.SortFunc(
+	//	sorted,
+	//	func(i, j IndexedValue[T]) int {
+	//		return cmp.Compare(i.Index, j.Index)
+	//	},
+	//)
+
 	sort.SliceStable(
 		sorted,
 		func(i, j int) bool {
@@ -94,21 +101,13 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[
 		wg.Add(1)
 
 		go func(i int, exec Executable[T]) {
+			defer wg.Done()
 			val, err := exec(ctx)
-			if err != nil {
-				output <- IndexedExecutableOutput[T]{
-					IndexedValue[T]{i, *new(T)},
-					err,
-				}
-				wg.Done()
-				return
-			}
-
 			output <- IndexedExecutableOutput[T]{
 				IndexedValue[T]{i, val},
-				nil,
+				err,
 			}
-			wg.Done()
+			return
 		}(i, exec)
 	}
 
@@ -117,13 +116,13 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[
 }
 
 func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num int, output chan IndexedExecutableOutput[T]) {
-	uVals := make([]IndexedValue[T], num)
+	uVals := make([]IndexedValue[T], 0, num)
 
 	enough := false
 	outputCount := 0
 	for r := range output {
 		if enough {
-			continue
+			return
 		}
 
 		if r.Err != nil {
@@ -132,8 +131,7 @@ func takeUntilEnough[T any](fail chan error, success chan []IndexedValue[T], num
 			continue
 		}
 
-		uVals[outputCount] = r.Value
-		outputCount++
+		uVals = append(uVals, r.Value)
 
 		if outputCount == num {
 			enough = true
