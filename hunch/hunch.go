@@ -18,12 +18,12 @@ func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	output := make(chan IndexedExecutableOutput, 1)
+	output := make(chan IndexedExecutableOutput[T], 1)
 	go runExecs(ctx, output, execs)
 
 	fail := make(chan error, 1)
 	done := make(chan bool)
-	success := make(chan []IndexedValue, 1)
+	success := make(chan []IndexedValue[T], 1)
 	go takeUntilEnough(fail, success, min(len(execs), num), output, done, true)
 
 	select {
@@ -55,9 +55,9 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	output := make(chan IndexedExecutableOutput, 1)
+	output := make(chan IndexedExecutableOutput[T], 1)
 	fail := make(chan error, 1)
-	success := make(chan []IndexedValue, 1)
+	success := make(chan []IndexedValue[T], 1)
 	done := make(chan bool)
 
 	go runExecs(ctx, output, execs)
@@ -76,7 +76,7 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 		return nil, err
 
 	case uVals := <-success:
-		return pluckVals[T](sortIdxVals(uVals)), nil
+		return pluckVals(sortIdxVals(uVals)), nil
 
 	case <-done:
 		cancel()
@@ -90,9 +90,9 @@ func Throw[T any](parentCtx context.Context, execs ...Executable[T]) error {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	output := make(chan IndexedExecutableOutput, 1)
+	output := make(chan IndexedExecutableOutput[T], 1)
 	fail := make(chan error, 1)
-	success := make(chan []IndexedValue, 1)
+	success := make(chan []IndexedValue[T], 1)
 	done := make(chan bool)
 
 	go runExecs(ctx, output, execs)

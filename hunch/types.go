@@ -13,13 +13,13 @@ type ExecutableInSequence[T any] func(context.Context, T) (T, error)
 
 // IndexedValue stores the output of Executables,
 // along with the index of the source Executable for ordering.
-type IndexedValue struct {
+type IndexedValue[T any] struct {
 	Index int
-	Value any
+	Value T
 }
 
 // IndexedExecutableOutput stores both output and error values from a Excetable.
-type IndexedExecutableOutput struct {
-	Value IndexedValue
+type IndexedExecutableOutput[T any] struct {
+	Value IndexedValue[T]
 	Err   error
 }

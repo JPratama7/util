@@ -6,22 +6,17 @@ import (
 	"sync"
 )
 
-func pluckVals[T any](iVals []IndexedValue) []T {
+func pluckVals[T any](iVals []IndexedValue[T]) []T {
 	vals := make([]T, 0, len(iVals))
 
 	for _, val := range iVals {
-		conv, ok := val.Value.(T)
-		if !ok {
-			panic("hunch: type assertion failed")
-		}
-
-		vals = append(vals, conv)
+		vals = append(vals, val.Value)
 	}
 
 	return vals
 }
 
-func sortIdxVals(iVals []IndexedValue) (sorted []IndexedValue) {
+func sortIdxVals[T any](iVals []IndexedValue[T]) (sorted []IndexedValue[T]) {
 	sorted = iVals
 
 	sort.SliceStable(
@@ -34,7 +29,7 @@ func sortIdxVals(iVals []IndexedValue) (sorted []IndexedValue) {
 	return sorted
 }
 
-func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput, execs []Executable[T]) {
+func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput[T], execs []Executable[T]) {
 	var wg sync.WaitGroup
 	for i, exec := range execs {
 		wg.Add(1)
@@ -42,7 +37,7 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput,
 		go func(i int, exec Executable[T]) {
 			defer wg.Done()
 
-			temp := IndexedExecutableOutput{}
+			temp := IndexedExecutableOutput[T]{}
 
 			defer func() {
 				output <- temp
@@ -54,7 +49,7 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput,
 				return
 			}
 
-			temp.Value = IndexedValue{i, val}
+			temp.Value = IndexedValue[T]{i, val}
 		}(i, exec)
 	}
 
@@ -62,8 +57,8 @@ func runExecs[T any](ctx context.Context, output chan<- IndexedExecutableOutput,
 	close(output)
 }
 
-func takeUntilEnough(fail chan<- error, success chan<- []IndexedValue, num int, output <-chan IndexedExecutableOutput, done chan<- bool, takeVal bool) {
-	uVals := make([]IndexedValue, 0, num)
+func takeUntilEnough[T any](fail chan<- error, success chan<- []IndexedValue[T], num int, output <-chan IndexedExecutableOutput[T], done chan<- bool, takeVal bool) {
+	uVals := make([]IndexedValue[T], 0, num)
 
 	enough := false
 	outputCount := 0
