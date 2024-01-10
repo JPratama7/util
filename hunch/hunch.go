@@ -6,26 +6,6 @@ import (
 	"fmt"
 )
 
-// Executable represents a singular logic block.
-// It can be used with several functions.
-type Executable[T any] func(context.Context) (T, error)
-
-// ExecutableInSequence represents one of a sequence of logic blocks.
-type ExecutableInSequence[T any] func(context.Context, T) (T, error)
-
-// IndexedValue stores the output of Executables,
-// along with the index of the source Executable for ordering.
-type IndexedValue[T any] struct {
-	Index int
-	Value T
-}
-
-// IndexedExecutableOutput stores both output and error values from a Excetable.
-type IndexedExecutableOutput[T any] struct {
-	Value IndexedValue[T]
-	Err   error
-}
-
 // Take returns the first `num` values outputted by the Executables.
 func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]T, error) {
 	execCount := len(execs)
@@ -38,12 +18,12 @@ func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	output := make(chan IndexedExecutableOutput[T], 1)
+	output := make(chan IndexedExecutableOutput, 1)
 	go runExecs(ctx, output, execs)
 
 	fail := make(chan error, 1)
 	done := make(chan bool)
-	success := make(chan []IndexedValue[T], 1)
+	success := make(chan []IndexedValue, 1)
 	go takeUntilEnough(fail, success, min(len(execs), num), output, done, true)
 
 	select {
@@ -61,7 +41,7 @@ func Take[T any](parentCtx context.Context, num int, execs ...Executable[T]) ([]
 
 	case uVals := <-success:
 		cancel()
-		return pluckVals(uVals), nil
+		return pluckVals[T](uVals), nil
 
 	case <-done:
 		cancel()
@@ -75,9 +55,9 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	output := make(chan IndexedExecutableOutput[T], 1)
+	output := make(chan IndexedExecutableOutput, 1)
 	fail := make(chan error, 1)
-	success := make(chan []IndexedValue[T], 1)
+	success := make(chan []IndexedValue, 1)
 	done := make(chan bool)
 
 	go runExecs(ctx, output, execs)
@@ -96,7 +76,7 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 		return nil, err
 
 	case uVals := <-success:
-		return pluckVals(sortIdxVals(uVals)), nil
+		return pluckVals[T](sortIdxVals(uVals)), nil
 
 	case <-done:
 		cancel()
@@ -110,9 +90,9 @@ func Throw[T any](parentCtx context.Context, execs ...Executable[T]) error {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	output := make(chan IndexedExecutableOutput[T], 1)
+	output := make(chan IndexedExecutableOutput, 1)
 	fail := make(chan error, 1)
-	success := make(chan []IndexedValue[T], 1)
+	success := make(chan []IndexedValue, 1)
 	done := make(chan bool)
 
 	go runExecs(ctx, output, execs)
