@@ -1,4 +1,4 @@
-package middleware
+package auth
 
 import (
 	"github.com/JPratama7/util"
