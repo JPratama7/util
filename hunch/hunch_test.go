@@ -3,6 +3,7 @@ package hunch
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"sync/atomic"
 	"testing"
@@ -32,22 +33,16 @@ func TestTake_ShouldWorksAsExpected(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Take(
-			rootCtx,
-			3,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				<-time.After(300 * time.Millisecond)
-				return 3, nil
-			},
-		)
+		r, err := Take(rootCtx, 3, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			<-time.After(300 * time.Millisecond)
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -63,10 +58,7 @@ func TestTake_ShouldWorksAsExpected(t *testing.T) {
 		rs = append(rs, v.(int))
 	}
 
-	equal := reflect.DeepEqual([]int{2, 1, 3}, rs)
-	if !equal {
-		t.Errorf("Execution order is wrong, gets: %+v\n", rs)
-	}
+	assert.Equal(t, []int{2, 1, 3}, rs)
 }
 
 func TestTake_ShouldJustTakeAll(t *testing.T) {
@@ -75,19 +67,13 @@ func TestTake_ShouldJustTakeAll(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Take(
-			rootCtx,
-			100,
-			func(ctx context.Context) (interface{}, error) {
-				return 1, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				return 2, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				return 3, nil
-			},
-		)
+		r, err := Take(rootCtx, 100, func(ctx context.Context) (interface{}, error) {
+			return 1, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			return 2, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -103,9 +89,7 @@ func TestTake_ShouldJustTakeAll(t *testing.T) {
 		rs = append(rs, v.(int))
 	}
 
-	if len(rs) != 3 {
-		t.Errorf("Should return 3 results, but gets: %+v\n", rs)
-	}
+	assert.Equal(t, 3, len(rs))
 }
 
 func TestTake_ShouldLimitResults(t *testing.T) {
@@ -114,22 +98,16 @@ func TestTake_ShouldLimitResults(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Take(
-			rootCtx,
-			2,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				<-time.After(300 * time.Millisecond)
-				return 3, nil
-			},
-		)
+		r, err := Take(rootCtx, 2, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			<-time.After(300 * time.Millisecond)
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -141,10 +119,7 @@ func TestTake_ShouldLimitResults(t *testing.T) {
 		rs = append(rs, v.(int))
 	}
 
-	equal := reflect.DeepEqual([]int{2, 1}, rs)
-	if !equal {
-		t.Errorf("Execution order is wrong, gets: %+v\n", rs)
-	}
+	assert.Equal(t, []int{2, 1}, rs)
 }
 
 func TestTake_ShouldCancelWhenOneExecutableReturnedError(t *testing.T) {
@@ -153,34 +128,24 @@ func TestTake_ShouldCancelWhenOneExecutableReturnedError(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Take(
-			rootCtx,
-			3,
-			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 0, AppError{}
-			},
-			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 3, nil
-			},
-		)
+		r, err := Take(rootCtx, 3, func(ctx context.Context) (int, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (int, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 0, AppError{}
+		}, func(ctx context.Context) (int, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if !isSlice(r.Val) || len(r.Val.([]int)) != 0 {
-		t.Errorf("Return Value should be default, gets: \"%v\"\n", r.Val)
-	}
-	if r.Err == nil {
-		t.Errorf("Should returns an Error, gets `nil`\n")
-	}
+	assert.False(t, isSlice(r.Val) && len(r.Val.([]int)) != 0, "Return Value should be default, gets: \"%v\"\n", r.Val)
+	assert.NotNil(t, r.Err, "Should returns an Error, gets `nil`\n")
 }
 
 func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
@@ -189,26 +154,20 @@ func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
 	rootCtx, cancel := context.WithCancel(context.Background())
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Take(
-			rootCtx,
-			3,
-			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (int, error) {
-				select {
-				case <-ctx.Done():
-					return 0, AppError{}
-				case <-time.After(300 * time.Millisecond):
-					return 3, nil
-				}
-			},
-		)
+		r, err := Take(rootCtx, 3, func(ctx context.Context) (int, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (int, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (int, error) {
+			select {
+			case <-ctx.Done():
+				return 0, AppError{}
+			case <-time.After(300 * time.Millisecond):
+				return 3, nil
+			}
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -220,12 +179,8 @@ func TestTake_ShouldCancelWhenRootCanceled(t *testing.T) {
 	}()
 
 	r := <-ch
-	if !isSlice(r.Val) || len(r.Val.([]int)) != 0 {
-		t.Errorf("Return Value should be default, gets: \"%v\"\n", r.Val)
-	}
-	if r.Err == nil {
-		t.Errorf("Should returns an Error, gets `nil`\n")
-	}
+	assert.False(t, isSlice(r.Val) && len(r.Val.([]int)) != 0, "Return Value should be default, gets: \"%v\"\n", r.Val)
+	assert.NotNil(t, r.Err, "Should returns an Error, gets `nil`\n")
 }
 
 func TestAll_ShouldWorksAsExpected(t *testing.T) {
@@ -234,21 +189,16 @@ func TestAll_ShouldWorksAsExpected(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := All(
-			rootCtx,
-			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (int, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (int, error) {
-				<-time.After(300 * time.Millisecond)
-				return 3, nil
-			},
-		)
+		r, err := All(rootCtx, func(ctx context.Context) (int, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (int, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (int, error) {
+			<-time.After(300 * time.Millisecond)
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -262,10 +212,7 @@ func TestAll_ShouldWorksAsExpected(t *testing.T) {
 	var rs []int
 	rs = append(rs, r.Val.([]int)...)
 
-	equal := reflect.DeepEqual([]int{1, 2, 3}, rs)
-	if !equal {
-		t.Errorf("Execution order is wrong, gets: %+v\n", rs)
-	}
+	assert.Equal(t, []int{1, 2, 3}, rs)
 }
 
 func TestAll_WhenOutOfOrder(t *testing.T) {
@@ -274,21 +221,16 @@ func TestAll_WhenOutOfOrder(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := All(
-			rootCtx,
-			func(ctx context.Context) (int, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (int, error) {
-				time.Sleep(300 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (int, error) {
-				<-time.After(100 * time.Millisecond)
-				return 3, nil
-			},
-		)
+		r, err := All(rootCtx, func(ctx context.Context) (int, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (int, error) {
+			time.Sleep(300 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (int, error) {
+			<-time.After(100 * time.Millisecond)
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -302,10 +244,7 @@ func TestAll_WhenOutOfOrder(t *testing.T) {
 	var rs []int
 	rs = append(rs, r.Val.([]int)...)
 
-	equal := reflect.DeepEqual([]int{1, 2, 3}, rs)
-	if !equal {
-		t.Errorf("Execution order is wrong, gets: %+v\n", rs)
-	}
+	assert.Equal(t, []int{1, 2, 3}, rs)
 }
 
 func TestAll_WhenRootCtxCanceled(t *testing.T) {
@@ -314,25 +253,20 @@ func TestAll_WhenRootCtxCanceled(t *testing.T) {
 	rootCtx, cancel := context.WithCancel(context.Background())
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := All(
-			rootCtx,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				select {
-				case <-ctx.Done():
-					return nil, AppError{}
-				case <-time.After(300 * time.Millisecond):
-					return 3, nil
-				}
-			},
-		)
+		r, err := All(rootCtx, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			select {
+			case <-ctx.Done():
+				return nil, AppError{}
+			case <-time.After(300 * time.Millisecond):
+				return 3, nil
+			}
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -344,12 +278,9 @@ func TestAll_WhenRootCtxCanceled(t *testing.T) {
 	}()
 
 	r := <-ch
-	if !isSlice(r.Val) || len(r.Val.([]interface{})) != 0 {
-		t.Errorf("Return Value should be default, gets: \"%v\"\n", r.Val)
-	}
-	if r.Err == nil {
-		t.Errorf("Should returns an Error, gets `nil`\n")
-	}
+	assert.True(t, isSlice(r.Val), "Return Value should be default, gets: \"%v\"\n", r.Val)
+	assert.Empty(t, r.Val.([]interface{}), "Return Value should be empty")
+	assert.NotNil(t, r.Err, "Should returns an Error, gets `nil`\n")
 }
 
 func TestAll_WhenAnySubFunctionFailed(t *testing.T) {
@@ -360,36 +291,26 @@ func TestAll_WhenAnySubFunctionFailed(t *testing.T) {
 
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := All(
-			rootCtx,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(300 * time.Millisecond)
-				return nil, AppError{}
-			},
-		)
+		r, err := All(rootCtx, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(300 * time.Millisecond)
+			return nil, AppError{}
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if !isSlice(r.Val) || len(r.Val.([]interface{})) != 0 {
-		t.Errorf("Return Value should be default, gets: \"%v\"\n", r.Val)
-	}
-	if r.Err == nil {
-		t.Errorf("Should returns an Error, gets `nil`\n")
-	}
-	if r.Err.Error() != "app error!" {
-		t.Errorf("Should returns an AppError, gets \"%v\"\n", r.Err.Error())
-	}
+	assert.True(t, isSlice(r.Val), "Return Value should be default, gets: \"%v\"\n", r.Val)
+	assert.Empty(t, r.Val.([]interface{}), "Return Value should be empty")
+	assert.NotNil(t, r.Err, "Should returns an Error, gets `nil`\n")
+	assert.Equal(t, "app error!", r.Err.Error(), "Should returns an AppError, gets \"%v\"\n", r.Err.Error())
 }
 
 func TestRetry_WithNoFailure(t *testing.T) {
@@ -403,33 +324,23 @@ func TestRetry_WithNoFailure(t *testing.T) {
 
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Retry(
-			rootCtx,
-			10,
-			func(ctx context.Context) (interface{}, error) {
-				times++
+		r, err := Retry(rootCtx, 10, func(ctx context.Context) (interface{}, error) {
+			times++
 
-				time.Sleep(100 * time.Millisecond)
-				return expect, nil
-			},
-		)
+			time.Sleep(100 * time.Millisecond)
+			return expect, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if r.Err != nil {
-		t.Errorf("Gets an error: %v\n", r.Err)
-	}
+	assert.Nil(t, r.Err)
 
-	val, ok := r.Val.(int)
-	if ok == false || val != expect {
-		t.Errorf("Unmatched value: %v\n", r.Val)
-	}
-	if times != 1 {
-		t.Errorf("Should execute only once, gets: %v\n", times)
-	}
+	assert.IsTypef(t, 1, r.Val, "Should return int, but got: %v", r.Val)
+
+	assert.Equal(t, 1, times)
 }
 
 func TestLast_ShouldWorksAsExpected(t *testing.T) {
@@ -438,22 +349,16 @@ func TestLast_ShouldWorksAsExpected(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Last(
-			rootCtx,
-			2,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 2, nil
-			},
-			func(ctx context.Context) (interface{}, error) {
-				<-time.After(300 * time.Millisecond)
-				return 3, nil
-			},
-		)
+		r, err := Last(rootCtx, 2, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 2, nil
+		}, func(ctx context.Context) (interface{}, error) {
+			<-time.After(300 * time.Millisecond)
+			return 3, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -469,10 +374,8 @@ func TestLast_ShouldWorksAsExpected(t *testing.T) {
 		rs = append(rs, v.(int))
 	}
 
-	equal := reflect.DeepEqual([]int{1, 3}, rs)
-	if !equal {
-		t.Errorf("Execution order is wrong, gets: %+v\n", rs)
-	}
+	assert.Equal(t, []int{1, 3}, rs)
+
 }
 
 func TestWaterfall_ShouldWorksAsExpected(t *testing.T) {
@@ -481,36 +384,28 @@ func TestWaterfall_ShouldWorksAsExpected(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Waterfall(
-			rootCtx,
-			func(ctx context.Context, n interface{}) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				return 1, nil
-			},
-			func(ctx context.Context, n interface{}) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				n = n.(int) + 1
-				return n, nil
-			},
-			func(ctx context.Context, n interface{}) (interface{}, error) {
-				time.Sleep(100 * time.Millisecond)
-				n = n.(int) + 1
-				return n, nil
-			},
-		)
+		r, err := Waterfall(rootCtx, func(ctx context.Context, n interface{}) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 1, nil
+		}, func(ctx context.Context, n interface{}) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			n = n.(int) + 1
+			return n, nil
+		}, func(ctx context.Context, n interface{}) (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			n = n.(int) + 1
+			return n, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if r.Err != nil {
-		t.Errorf("Gets an error: %v\n", r.Err)
-	}
+	assert.Nil(t, r.Err)
 
-	if r.Val.(int) != 3 {
-		t.Errorf("Expect \"3\", but gets: \"%v\"\n", r.Val)
-	}
+	assert.IsTypef(t, 1, r.Val, "Should return int, but got: %v", r.Val)
+	assert.Equal(t, 3, r.Val)
 }
 
 func TestRetry_ShouldReturnsOnSuccess(t *testing.T) {
@@ -519,27 +414,18 @@ func TestRetry_ShouldReturnsOnSuccess(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Retry(
-			rootCtx,
-			3,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(200 * time.Millisecond)
-				return 1, nil
-			},
-		)
+		r, err := Retry(rootCtx, 3, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 1, nil
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if r.Err != nil {
-		t.Errorf("Gets an error: %v\n", r.Err)
-	}
-
-	if r.Val != 1 {
-		t.Errorf("Should gets `1`, gets: %+v instead\n", r.Val)
-	}
+	assert.Nil(t, r.Err)
+	assert.Equal(t, 1, r.Val)
 }
 
 func TestRetry_ShouldReturnsAfterFailingSeveralTimes(t *testing.T) {
@@ -549,34 +435,24 @@ func TestRetry_ShouldReturnsAfterFailingSeveralTimes(t *testing.T) {
 	rootCtx := context.Background()
 	ch := make(chan MultiReturns)
 	go func() {
-		r, err := Retry(
-			rootCtx,
-			3,
-			func(ctx context.Context) (interface{}, error) {
-				atomic.AddInt32(&times, 1)
-				if atomic.LoadInt32(&times) >= 2 {
-					return 1, nil
-				}
-				return nil, fmt.Errorf("err")
-			},
-		)
+		r, err := Retry(rootCtx, 3, func(ctx context.Context) (interface{}, error) {
+			atomic.AddInt32(&times, 1)
+			if atomic.LoadInt32(&times) >= 2 {
+				return 1, nil
+			}
+			return nil, fmt.Errorf("err")
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if r.Err != nil {
-		t.Errorf("Gets an error: %v\n", r.Err)
-	}
+	assert.Nil(t, r.Err)
 
-	if times != 2 {
-		t.Errorf("Should tried 2 times, instead of %v\n", times)
-	}
+	assert.Equal(t, int32(2), times)
 
-	if r.Val != 1 {
-		t.Errorf("Should gets `1`, gets: %+v instead\n", r.Val)
-	}
+	assert.Equal(t, 1, r.Val)
 }
 
 func TestRetry_ShouldKeepRetrying(t *testing.T) {
@@ -587,27 +463,20 @@ func TestRetry_ShouldKeepRetrying(t *testing.T) {
 	ch := make(chan MultiReturns)
 	go func() {
 
-		r, err := Retry(
-			rootCtx,
-			3,
-			func(ctx context.Context) (interface{}, error) {
-				atomic.AddInt32(&times, 1)
-				return nil, fmt.Errorf("err")
-			},
-		)
+		r, err := Retry(rootCtx, 3, func(ctx context.Context) (interface{}, error) {
+			atomic.AddInt32(&times, 1)
+			return nil, fmt.Errorf("err")
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
 	}()
 
 	r := <-ch
-	if r.Err == nil {
-		t.Errorf("Should gets an error")
-	}
 
-	if times != 3 {
-		t.Errorf("Should tried 3 times, instead of: %+v\n", times)
-	}
+	assert.NotNil(t, r.Err)
+
+	assert.Equal(t, int32(3), times)
 }
 
 func TestRetry_WhenRootCtxCanceled(t *testing.T) {
@@ -617,14 +486,10 @@ func TestRetry_WhenRootCtxCanceled(t *testing.T) {
 	ch := make(chan MultiReturns)
 	go func() {
 
-		r, err := Retry(
-			rootCtx,
-			3,
-			func(ctx context.Context) (interface{}, error) {
-				time.Sleep(50 * time.Millisecond)
-				return nil, fmt.Errorf("err")
-			},
-		)
+		r, err := Retry(rootCtx, 3, func(ctx context.Context) (interface{}, error) {
+			time.Sleep(50 * time.Millisecond)
+			return nil, fmt.Errorf("err")
+		})
 
 		ch <- MultiReturns{r, err}
 		close(ch)
@@ -635,9 +500,8 @@ func TestRetry_WhenRootCtxCanceled(t *testing.T) {
 	}()
 
 	r := <-ch
-	if r.Err == nil {
-		t.Errorf("Should gets an error")
-	}
+
+	assert.NotNil(t, r.Err)
 }
 
 func TestThrow_ShouldReturnParentContextErrorWhenParentContextIsDone(t *testing.T) {
@@ -651,9 +515,7 @@ func TestThrow_ShouldReturnParentContextErrorWhenParentContextIsDone(t *testing.
 		return 1, nil
 	})
 
-	if err != context.Canceled {
-		t.Errorf("Expected context.Canceled, but got: %v", err)
-	}
+	assert.IsTypef(t, context.Canceled, err, "Should return context.Canceled, but got: %v", err)
 }
 
 func TestThrow_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
@@ -664,10 +526,7 @@ func TestThrow_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
 	err := Throw(ctx, func(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("executable error")
 	})
-
-	if err == nil || err.Error() != "executable error" {
-		t.Errorf("Expected 'executable error', but got: %v", err)
-	}
+	assert.NotNil(t, err)
 }
 
 func TestThrow_ShouldReturnNilWhenAllExecutablesSucceed(t *testing.T) {
@@ -675,17 +534,13 @@ func TestThrow_ShouldReturnNilWhenAllExecutablesSucceed(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := Throw(ctx,
-		func(ctx context.Context) (int, error) {
-			return 1, nil
-		},
-		func(ctx context.Context) (int, error) {
-			return 2, nil
-		},
-		func(ctx context.Context) (int, error) {
-			return 3, nil
-		},
-	)
+	err := Throw(ctx, func(ctx context.Context) (int, error) {
+		return 1, nil
+	}, func(ctx context.Context) (int, error) {
+		return 2, nil
+	}, func(ctx context.Context) (int, error) {
+		return 3, nil
+	})
 
 	if err != nil {
 		t.Errorf("Expected nil, but got: %v", err)
