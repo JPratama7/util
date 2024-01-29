@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"reflect"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 type AppError struct {
@@ -559,4 +561,28 @@ func TestMin(t *testing.T) {
 	if min(54321, 12345) != 12345 {
 		t.Errorf("Should returns 12345")
 	}
+}
+
+func TestCok(t *testing.T) {
+	t.Parallel()
+
+	pol := sync.Pool{New: func() any { return new(unsafe.Pointer) }}
+
+	sU := *pol.Get().(*unsafe.Pointer)
+
+	s := (*string)(sU)
+	sP := "hlleo"
+	s = &sP
+	fmt.Println(*s)
+
+	pol.Put((*unsafe.Pointer)(unsafe.Pointer(&s)))
+
+	aU := *pol.Get().(*unsafe.Pointer)
+	a := (*int)(aU)
+
+	aP := 1
+	a = &aP
+
+	fmt.Println(*a)
+	pol.Put((*unsafe.Pointer)(unsafe.Pointer(&a)))
 }
