@@ -27,7 +27,7 @@ func runner[T any](ctx context.Context, i int, take bool, wg *sync.WaitGroup, mu
 	data.Value = IndexedValue[T]{i, val}
 }
 
-func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []IndexedValue[T], err error) {
+func run[T any](ctx context.Context, ignoreErr bool, num int, execs ...Executable[T]) (val []IndexedValue[T], err error) {
 
 	mut := new(sync.RWMutex)
 	wg := new(sync.WaitGroup)
@@ -41,11 +41,11 @@ func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []Ind
 
 	wg.Wait()
 
-	val, err = takeUntilEnoughMut(num, num != 0, fullres...)
+	val, err = takeUntilEnoughMut(num, num != 0, ignoreErr, fullres...)
 	return
 }
 
-func takeUntilEnoughMut[T any](total int, take bool, res ...IndexedExecutableOutput[T]) (uVals []IndexedValue[T], err error) {
+func takeUntilEnoughMut[T any](total int, take, ignoreErr bool, res ...IndexedExecutableOutput[T]) (uVals []IndexedValue[T], err error) {
 	totalData := len(res)
 
 	if total != 0 {
@@ -59,6 +59,10 @@ func takeUntilEnoughMut[T any](total int, take bool, res ...IndexedExecutableOut
 	for _, r := range res {
 
 		if r.Err != nil {
+			if ignoreErr {
+				continue
+			}
+
 			err = r.Err
 			break
 		}
