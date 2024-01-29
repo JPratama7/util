@@ -180,6 +180,7 @@ func BenchmarkAllWithFiveExecsMut(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		AllMut(
 			rootCtx,
+			true,
 			func(ctx context.Context) (int, error) {
 				return 1, nil
 			},
