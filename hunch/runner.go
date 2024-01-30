@@ -5,12 +5,8 @@ import (
 	"sync"
 )
 
-func runner[T any](ctx context.Context, i int, take bool, wg *sync.WaitGroup, mut *sync.RWMutex, exec Executable[T], res []IndexedExecutableOutput[T]) {
-	mut.Lock()
-	data := IndexedExecutableOutput[T]{}
+func runner[T any](ctx context.Context, i int, take bool, wg *sync.WaitGroup, exec Executable[T], data *IndexedExecutableOutput[T]) {
 	defer func() {
-		res = append(res, data)
-		mut.Unlock()
 		wg.Done()
 	}()
 
@@ -29,14 +25,13 @@ func runner[T any](ctx context.Context, i int, take bool, wg *sync.WaitGroup, mu
 
 func run[T any](ctx context.Context, ignoreErr bool, num int, execs ...Executable[T]) (val []IndexedValue[T], err error) {
 
-	mut := new(sync.RWMutex)
 	wg := new(sync.WaitGroup)
 
-	fullres := make([]IndexedExecutableOutput[T], 0, len(execs))
+	fullres := make([]IndexedExecutableOutput[T], len(execs))
 
 	for i, exec := range execs {
 		wg.Add(1)
-		go runner(ctx, i, num != 0, wg, mut, exec, fullres)
+		go runner(ctx, i, num != 0, wg, exec, &fullres[i])
 	}
 
 	wg.Wait()
@@ -56,7 +51,7 @@ func takeUntilEnoughMut[T any](total int, take, ignoreErr bool, res ...IndexedEx
 		uVals = make([]IndexedValue[T], 0, totalData)
 	}
 
-	for _, r := range res {
+	for _, r := range res[:totalData] {
 
 		if r.Err != nil {
 			if ignoreErr {

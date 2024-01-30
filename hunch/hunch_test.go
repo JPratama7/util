@@ -2,6 +2,7 @@ package hunch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"reflect"
@@ -573,7 +574,6 @@ func TestCok(t *testing.T) {
 	s := (*string)(sU)
 	sP := "hlleo"
 	s = &sP
-	fmt.Println(*s)
 
 	pol.Put((*unsafe.Pointer)(unsafe.Pointer(&s)))
 
@@ -583,6 +583,73 @@ func TestCok(t *testing.T) {
 	aP := 1
 	a = &aP
 
-	fmt.Println(*a)
 	pol.Put((*unsafe.Pointer)(unsafe.Pointer(&a)))
+}
+
+func TestTakeMut_ShouldReturnFirstNValues(t *testing.T) {
+	ctx := context.Background()
+	values, err := TakeMut(ctx, 2, func(ctx context.Context) (int, error) {
+		return 1, nil
+	}, func(ctx context.Context) (int, error) {
+		return 2, nil
+	}, func(ctx context.Context) (int, error) {
+		return 3, nil
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, []int{1, 2}, values)
+}
+
+func TestTakeMut_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
+	ctx := context.Background()
+	_, err := TakeMut(ctx, 2, func(ctx context.Context) (int, error) {
+		return 0, errors.New("executable error")
+	})
+
+	assert.NotNil(t, err)
+}
+
+func TestAllMut_ShouldReturnAllValues(t *testing.T) {
+	ctx := context.Background()
+	values, err := AllMut(ctx, true, func(ctx context.Context) (int, error) {
+		return 1, nil
+	}, func(ctx context.Context) (int, error) {
+		return 2, nil
+	}, func(ctx context.Context) (int, error) {
+		return 3, nil
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, []int{1, 2, 3}, values)
+}
+
+func TestAllMut_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
+	ctx := context.Background()
+	_, err := AllMut(ctx, false, func(ctx context.Context) (int, error) {
+		return 0, errors.New("executable error")
+	})
+
+	assert.NotNil(t, err)
+}
+
+func TestThrowMut_ShouldReturnNilWhenAllExecutablesSucceed(t *testing.T) {
+	ctx := context.Background()
+	err := ThrowMut(ctx, func(ctx context.Context) (int, error) {
+		return 1, nil
+	}, func(ctx context.Context) (int, error) {
+		return 2, nil
+	}, func(ctx context.Context) (int, error) {
+		return 3, nil
+	})
+
+	assert.Nil(t, err)
+}
+
+func TestThrowMut_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
+	ctx := context.Background()
+	err := ThrowMut(ctx, func(ctx context.Context) (int, error) {
+		return 0, errors.New("executable error")
+	})
+
+	assert.NotNil(t, err)
 }
