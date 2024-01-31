@@ -550,20 +550,6 @@ func TestThrow_ShouldReturnNilWhenAllExecutablesSucceed(t *testing.T) {
 	}
 }
 
-func TestMin(t *testing.T) {
-	t.Parallel()
-
-	if min(1, 2) != 1 {
-		t.Errorf("Should returns 1")
-	}
-	if min(-1, 2) != -1 {
-		t.Errorf("Should returns -1")
-	}
-	if min(54321, 12345) != 12345 {
-		t.Errorf("Should returns 12345")
-	}
-}
-
 func TestCok(t *testing.T) {
 	t.Parallel()
 
