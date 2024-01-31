@@ -623,7 +623,30 @@ func TestAllMut_ShouldReturnAllValues(t *testing.T) {
 	assert.Equal(t, []int{1, 2, 3}, values)
 }
 
+func TestAllMut_ShouldReturnAllValuesString(t *testing.T) {
+	ctx := context.Background()
+	values, err := AllMut(ctx, true, func(ctx context.Context) (string, error) {
+		return "a", nil
+	}, func(ctx context.Context) (string, error) {
+		return "b", nil
+	}, func(ctx context.Context) (string, error) {
+		return "c", nil
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"a", "b", "c"}, values)
+}
+
 func TestAllMut_ShouldReturnErrorWhenExecutableFails(t *testing.T) {
+	ctx := context.Background()
+	_, err := AllMut(ctx, false, func(ctx context.Context) (int, error) {
+		return 0, errors.New("executable error")
+	})
+
+	assert.NotNil(t, err)
+}
+
+func TestAllMut_ShouldReturnErrorWhenExecutableFailsString(t *testing.T) {
 	ctx := context.Background()
 	_, err := AllMut(ctx, false, func(ctx context.Context) (int, error) {
 		return 0, errors.New("executable error")
