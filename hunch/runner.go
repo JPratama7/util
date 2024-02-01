@@ -11,12 +11,9 @@ func runner[T any](ctx context.Context, i int, take bool, wg *sync.WaitGroup, ex
 	}()
 
 	val, err := exec(ctx)
-	if err != nil {
-		data.Err = err
-		return
-	}
 
 	if !take {
+		data.Err = err
 		return
 	}
 
