@@ -174,3 +174,6 @@ func (s *Sets[T]) Range(f func(v T) bool) {
 		}
 	}
 }
+
+func (s *Sets[T]) Iterator() {
+}
