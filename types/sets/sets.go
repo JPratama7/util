@@ -163,3 +163,14 @@ func (s *Sets[T]) Next() (c chan T) {
 
 	return
 }
+
+func (s *Sets[T]) Range(f func(v T) bool) {
+	s.sy.RLock()
+	defer s.sy.RUnlock()
+
+	for key := range s.m {
+		if !f(key) {
+			break
+		}
+	}
+}
