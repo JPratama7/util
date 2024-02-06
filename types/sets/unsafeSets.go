@@ -1,15 +1,17 @@
 package sets
 
+import "github.com/JPratama7/util/types"
+
 type UnsafeSets[T comparable] struct {
 	m map[T]empty
 }
 
-func NewUnsafeSets[T comparable]() *UnsafeSets[T] {
-	return &UnsafeSets[T]{m: make(map[T]empty)}
+func NewUnsafeSets[T comparable](size ...int) *UnsafeSets[T] {
+	return &UnsafeSets[T]{m: make(map[T]empty, types.Sizer(size...))}
 }
 
 func NewUnsafeFromSlices[T comparable](slices []T) *UnsafeSets[T] {
-	set := NewUnsafeSets[T]()
+	set := NewUnsafeSets[T](len(slices))
 	for _, slice := range slices {
 		set.Add(slice)
 	}
@@ -17,7 +19,7 @@ func NewUnsafeFromSlices[T comparable](slices []T) *UnsafeSets[T] {
 }
 
 func NewUnsafeFromMapKey[T comparable](m map[T]any) *UnsafeSets[T] {
-	set := NewUnsafeSets[T]()
+	set := NewUnsafeSets[T](len(m))
 	for key := range m {
 		set.Add(key)
 	}
@@ -26,7 +28,7 @@ func NewUnsafeFromMapKey[T comparable](m map[T]any) *UnsafeSets[T] {
 }
 
 func NewUnsafeFromMapValue[T comparable](m map[any]T) *UnsafeSets[T] {
-	set := NewUnsafeSets[T]()
+	set := NewUnsafeSets[T](len(m))
 	for _, value := range m {
 		set.Add(value)
 	}

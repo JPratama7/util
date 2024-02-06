@@ -1,6 +1,9 @@
 package sets
 
-import "sync"
+import (
+	"github.com/JPratama7/util/types"
+	"sync"
+)
 
 type empty = struct{}
 
@@ -9,12 +12,12 @@ type Sets[T comparable] struct {
 	sy sync.RWMutex
 }
 
-func NewSets[T comparable]() *Sets[T] {
-	return &Sets[T]{m: make(map[T]empty)}
+func NewSets[T comparable](size ...int) *Sets[T] {
+	return &Sets[T]{m: make(map[T]empty, types.Sizer(size...))}
 }
 
 func NewFromSlices[T comparable](slices []T) *Sets[T] {
-	set := NewSets[T]()
+	set := NewSets[T](len(slices))
 	for _, slice := range slices {
 		set.Add(slice)
 	}
@@ -22,7 +25,7 @@ func NewFromSlices[T comparable](slices []T) *Sets[T] {
 }
 
 func NewFromMapKey[T comparable](m map[T]any) *Sets[T] {
-	set := NewSets[T]()
+	set := NewSets[T](len(m))
 	for key := range m {
 		set.Add(key)
 	}
@@ -31,7 +34,7 @@ func NewFromMapKey[T comparable](m map[T]any) *Sets[T] {
 }
 
 func NewFromMapValue[T comparable](m map[any]T) *Sets[T] {
-	set := NewSets[T]()
+	set := NewSets[T](len(m))
 	for _, value := range m {
 		set.Add(value)
 	}
