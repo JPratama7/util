@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         build: [
-          fiber, gorm, http, hunch, time, token, types
+          fiber, gorm, http, hunch, time, token, types, generator
         ]
       fail-fast: false
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
     strategy:
       matrix:
         build: [
-          fiber, gorm, http, hunch, time, token, types
+          fiber, gorm, http, hunch, time, token, types, generator
         ]
       fail-fast: false
     runs-on: ubuntu-latest

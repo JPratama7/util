@@ -45,9 +45,10 @@ func TestValueWithEmptySlice(t *testing.T) {
 	iter := make([]int, 0)
 	iterSlice := NewIterSlice(iter)
 
-	value := iterSlice.Value()
+	i, value := iterSlice.Value()
 
 	assert.Empty(t, value)
+	assert.Equal(t, i, -1)
 }
 
 func TestValueWithNonEmptySlice(t *testing.T) {
@@ -55,10 +56,11 @@ func TestValueWithNonEmptySlice(t *testing.T) {
 	iterSlice := NewIterSlice(iter)
 
 	iterSlice.Next()
-	value := iterSlice.Value()
+	i, value := iterSlice.Value()
 
 	assert.NotNil(t, value)
 	assert.Equal(t, 1, value)
+	assert.Equal(t, 0, i)
 }
 
 func TestHasNextWithEmptySlice(t *testing.T) {
