@@ -1,6 +1,7 @@
 package sets
 
 import (
+	"github.com/JPratama7/util/generator"
 	"github.com/JPratama7/util/types"
 	"sync"
 )
@@ -178,5 +179,6 @@ func (s *Sets[T]) Range(f func(v T) bool) {
 	}
 }
 
-func (s *Sets[T]) Iterator() {
+func (s *Sets[T]) Iterator() generator.Generator[int, T] {
+	return generator.NewIterSlice(s.ToSlice())
 }

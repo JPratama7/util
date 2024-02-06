@@ -1,6 +1,9 @@
 package sets
 
-import "github.com/JPratama7/util/types"
+import (
+	"github.com/JPratama7/util/generator"
+	"github.com/JPratama7/util/types"
+)
 
 type UnsafeSets[T comparable] struct {
 	m map[T]empty
@@ -125,5 +128,6 @@ func (s *UnsafeSets[T]) Range(f func(v T) bool) {
 	}
 }
 
-func (s *UnsafeSets[T]) Iterator() {
+func (s *UnsafeSets[T]) Iterator() generator.Generator[int, T] {
+	return generator.NewIterSlice(s.ToSlice())
 }
