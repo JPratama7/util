@@ -1,16 +1,18 @@
 package sets
 
-import "testing"
+import (
+	"testing"
+)
 
 func BenchmarkUnsafeSets(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}
 }
 
 func BenchmarkUnsafeSetsRemove(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}
@@ -21,7 +23,7 @@ func BenchmarkUnsafeSetsRemove(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsContains(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}
@@ -32,7 +34,7 @@ func BenchmarkUnsafeSetsContains(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsSize(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}
@@ -43,7 +45,7 @@ func BenchmarkUnsafeSetsSize(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsToSlice(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}
@@ -54,7 +56,7 @@ func BenchmarkUnsafeSetsToSlice(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsClear(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}
@@ -65,8 +67,8 @@ func BenchmarkUnsafeSetsClear(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsUnion(b *testing.B) {
-	set1 := UnsafeUnsafeSets[int]()
-	set2 := UnsafeUnsafeSets[int]()
+	set1 := NewUnsafeSets[int]()
+	set2 := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set1.Add(i)
 		set2.Add(i)
@@ -78,8 +80,8 @@ func BenchmarkUnsafeSetsUnion(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsIntersection(b *testing.B) {
-	set1 := UnsafeUnsafeSets[int]()
-	set2 := UnsafeUnsafeSets[int]()
+	set1 := NewUnsafeSets[int]()
+	set2 := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set1.Add(i)
 		set2.Add(i)
@@ -91,8 +93,8 @@ func BenchmarkUnsafeSetsIntersection(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsDifference(b *testing.B) {
-	set1 := UnsafeUnsafeSets[int]()
-	set2 := UnsafeUnsafeSets[int]()
+	set1 := NewUnsafeSets[int]()
+	set2 := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set1.Add(i)
 		set2.Add(i)
@@ -104,8 +106,8 @@ func BenchmarkUnsafeSetsDifference(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsIsSubset(b *testing.B) {
-	set1 := UnsafeUnsafeSets[int]()
-	set2 := UnsafeUnsafeSets[int]()
+	set1 := NewUnsafeSets[int]()
+	set2 := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set1.Add(i)
 		set2.Add(i)
@@ -117,7 +119,7 @@ func BenchmarkUnsafeSetsIsSubset(b *testing.B) {
 }
 
 func BenchmarkUnsafeSetsNext(b *testing.B) {
-	set := UnsafeUnsafeSets[int]()
+	set := NewUnsafeSets[int]()
 	for i := 0; i < b.N; i++ {
 		set.Add(i)
 	}

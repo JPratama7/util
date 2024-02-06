@@ -4,12 +4,12 @@ type UnsafeSets[T comparable] struct {
 	m map[T]empty
 }
 
-func UnsafeUnsafeSets[T comparable]() *UnsafeSets[T] {
+func NewUnsafeSets[T comparable]() *UnsafeSets[T] {
 	return &UnsafeSets[T]{m: make(map[T]empty)}
 }
 
 func NewUnsafeFromSlices[T comparable](slices []T) *UnsafeSets[T] {
-	set := UnsafeUnsafeSets[T]()
+	set := NewUnsafeSets[T]()
 	for _, slice := range slices {
 		set.Add(slice)
 	}
@@ -17,7 +17,7 @@ func NewUnsafeFromSlices[T comparable](slices []T) *UnsafeSets[T] {
 }
 
 func NewUnsafeFromMapKey[T comparable](m map[T]any) *UnsafeSets[T] {
-	set := UnsafeUnsafeSets[T]()
+	set := NewUnsafeSets[T]()
 	for key := range m {
 		set.Add(key)
 	}
@@ -26,7 +26,7 @@ func NewUnsafeFromMapKey[T comparable](m map[T]any) *UnsafeSets[T] {
 }
 
 func NewUnsafeFromMapValue[T comparable](m map[any]T) *UnsafeSets[T] {
-	set := UnsafeUnsafeSets[T]()
+	set := NewUnsafeSets[T]()
 	for _, value := range m {
 		set.Add(value)
 	}
@@ -63,7 +63,7 @@ func (s *UnsafeSets[T]) Clear() {
 }
 
 func (s *UnsafeSets[T]) Union(other *UnsafeSets[T]) *UnsafeSets[T] {
-	union := UnsafeUnsafeSets[T]()
+	union := NewUnsafeSets[T]()
 	for key := range s.m {
 		union.Add(key)
 	}
@@ -74,7 +74,7 @@ func (s *UnsafeSets[T]) Union(other *UnsafeSets[T]) *UnsafeSets[T] {
 }
 
 func (s *UnsafeSets[T]) Intersection(other *UnsafeSets[T]) *UnsafeSets[T] {
-	intersection := UnsafeUnsafeSets[T]()
+	intersection := NewUnsafeSets[T]()
 	for key := range s.m {
 		if other.Contains(key) {
 			intersection.Add(key)
@@ -84,7 +84,7 @@ func (s *UnsafeSets[T]) Intersection(other *UnsafeSets[T]) *UnsafeSets[T] {
 }
 
 func (s *UnsafeSets[T]) Difference(other *UnsafeSets[T]) *UnsafeSets[T] {
-	difference := UnsafeUnsafeSets[T]()
+	difference := NewUnsafeSets[T]()
 	for key := range s.m {
 		if !other.Contains(key) {
 			difference.Add(key)
