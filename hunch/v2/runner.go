@@ -8,20 +8,20 @@ import (
 )
 
 func runner[T any](ctx context.Context, idx int, take bool, mut *sync.Mutex, wg *sync.WaitGroup, exec Executable[T], done chan<- int, data *ExecutableOutput[T]) {
+	defer func() {
+		wg.Done()
+		mut.Unlock()
+		done <- idx
+	}()
+
 	v, err := exec(ctx)
 
-	defer func(a T, e error) {
-		mut.Lock()
-		data.Value = a
-		data.Err = e
-		mut.Unlock()
-		wg.Done()
-		done <- idx
-	}(v, err)
-
+	mut.Lock()
+	data.Err = err
 	if !take {
 		return
 	}
+	data.Value = v
 }
 
 func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, err error) {
