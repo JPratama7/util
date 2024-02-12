@@ -1,6 +1,8 @@
 package convert
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestToPtrReturnsPointerToInt(t *testing.T) {
 	value := 123

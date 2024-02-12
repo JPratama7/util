@@ -1,5 +1,7 @@
 package generator
 
+import "context"
+
 // IteratorMap is a type that can be used to generate values of type T.
 type IteratorMap[K comparable, V any, M ~map[K]V] struct {
 	iter    M
@@ -57,4 +59,8 @@ func (i *IteratorMap[K, V, M]) Next() bool {
 // Value returns the current value.
 func (i *IteratorMap[K, V, M]) Value() (K, V) {
 	return i.lastKey, i.iter[i.lastKey]
+}
+
+func (i *IteratorMap[K, V, M]) Chan(c context.Context) (chan K, chan V) {
+	return ToChannelMap(c, i.iter)
 }

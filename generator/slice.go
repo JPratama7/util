@@ -1,5 +1,7 @@
 package generator
 
+import "context"
+
 // IteratorSlice is a type that can be used to generate values of type T.
 type IteratorSlice[K int, T any] struct {
 	iter  []T
@@ -30,4 +32,8 @@ func (i *IteratorSlice[K, T]) Value() (int, T) {
 // HasNext returns true if there are more values to generate.
 func (i *IteratorSlice[K, T]) HasNext() bool {
 	return i.index+1 < len(i.iter)
+}
+
+func (i *IteratorSlice[K, T]) Chan(ctx context.Context) (chan int, chan T) {
+	return ToChannelSlice(ctx, i.iter)
 }
