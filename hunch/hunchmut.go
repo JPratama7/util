@@ -17,7 +17,7 @@ func TakeMut[T any](parentCtx context.Context, num int, execs ...Executable[T]) 
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	i, err := run(ctx, false, num, execs...)
+	i, err := run(ctx, false, false, num, execs...)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func AllMut[T any](parentCtx context.Context, ignoreErr bool, execs ...Executabl
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	i, err := run(ctx, ignoreErr, len(execs), execs...)
+	i, err := run(ctx, false, ignoreErr, len(execs), execs...)
 	if err != nil {
 		return nil, err
 	}
@@ -40,14 +40,11 @@ func AllMut[T any](parentCtx context.Context, ignoreErr bool, execs ...Executabl
 }
 
 // ThrowMut Throw execute and ignore all the outputs from all Executables.
-func ThrowMut[T any](parentCtx context.Context, execs ...Executable[T]) error {
+func ThrowMut[T any](parentCtx context.Context, execs ...Executable[T]) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	_, err := run(ctx, false, 0, execs...)
-	if err != nil {
-		return err
-	}
+	_, _ = run(ctx, true, false, 0, execs...)
 
-	return nil
+	return
 }

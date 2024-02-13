@@ -3,6 +3,7 @@ package hunch
 import (
 	"context"
 	"errors"
+	"runtime"
 	"sync"
 )
 
@@ -48,6 +49,7 @@ func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, 
 	defer func() {
 		earlyDone = nil
 		fullres = nil
+		runtime.GC()
 	}()
 
 	go func(wg *sync.WaitGroup, wgCh chan<- *struct{}) {

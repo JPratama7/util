@@ -6,16 +6,15 @@ import (
 )
 
 func runner[T any](ctx context.Context, i int, take bool, mut *sync.Mutex, wg *sync.WaitGroup, exec Executable[T], data *IndexedExecutableOutput[T]) {
-	mut.Lock()
-
 	defer func() {
 		wg.Done()
 		mut.Unlock()
 	}()
 
 	val, err := exec(ctx)
-	data.Err = err
 
+	mut.Lock()
+	data.Err = err
 	if !take {
 		return
 	}
@@ -23,7 +22,7 @@ func runner[T any](ctx context.Context, i int, take bool, mut *sync.Mutex, wg *s
 	data.Value = IndexedValue[T]{i, val}
 }
 
-func run[T any](ctx context.Context, ignoreErr bool, num int, execs ...Executable[T]) (val []IndexedValue[T], err error) {
+func run[T any](ctx context.Context, ignoreAll, ignoreErr bool, num int, execs ...Executable[T]) (val []IndexedValue[T], err error) {
 
 	wg := new(sync.WaitGroup)
 	mut := new(sync.Mutex)
@@ -33,6 +32,10 @@ func run[T any](ctx context.Context, ignoreErr bool, num int, execs ...Executabl
 	for i, exec := range execs {
 		wg.Add(1)
 		go runner(ctx, i, num != 0, mut, wg, exec, &fullres[i])
+	}
+
+	if ignoreAll {
+		return
 	}
 
 	wg.Wait()
