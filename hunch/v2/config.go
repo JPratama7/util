@@ -21,6 +21,7 @@ func resetGlobalCfg() {
 
 func copyGlobalCfg() (cfg globalConfig) {
 	cfg = *globalCfg
+
 	resetGlobalCfg()
 	return
 }

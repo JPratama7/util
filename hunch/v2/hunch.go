@@ -3,7 +3,6 @@ package hunch
 
 import (
 	"context"
-	"log"
 )
 
 // Take returns the first `num` values outputted by the Executables.
@@ -37,7 +36,6 @@ func All[T any](parentCtx context.Context, execs ...Executable[T]) ([]T, error) 
 	resetGlobalCfg()
 
 	i, err := run(ctx, len(execs), execs...)
-	log.Printf("i: %+v", err)
 	if err != nil {
 		return nil, err
 	}

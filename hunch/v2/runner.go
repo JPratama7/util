@@ -3,8 +3,9 @@ package hunch
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"sync"
+	"time"
 )
 
 func runner[T any](ctx context.Context, idx int, take bool, mut *sync.Mutex, wg *sync.WaitGroup, exec Executable[T], done chan<- int, data *ExecutableOutput[T]) {
@@ -25,13 +26,14 @@ func runner[T any](ctx context.Context, idx int, take bool, mut *sync.Mutex, wg 
 }
 
 func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, err error) {
+	now := time.Now()
 
 	wg := new(sync.WaitGroup)
 	mut := new(sync.Mutex)
 
 	fullres := make([]ExecutableOutput[T], len(execs))
 	earlyDone := make(chan int)
-	wgCh := make(chan int, 1)
+	wgCh := make(chan *struct{})
 
 	localCfg := copyGlobalCfg()
 
@@ -40,9 +42,9 @@ func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, 
 		go runner(ctx, i, num != 0, mut, wg, exec, earlyDone, &fullres[i])
 	}
 
-	go func(wg *sync.WaitGroup, wgCh chan<- int) {
+	go func(wg *sync.WaitGroup, wgCh chan<- *struct{}) {
 		wg.Wait()
-		wgCh <- 1
+		wgCh <- nil
 		close(wgCh)
 	}(wg, wgCh)
 
@@ -56,13 +58,18 @@ func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, 
 			err = errors.New("context canceled")
 			return
 		case idx := <-earlyDone:
+			if fullres[idx].Err != nil {
+				err = fullres[idx].Err
+				return
+			}
+
 			val = make([]T, 0, 1)
 			val = append(val, fullres[idx].Value)
-			log.Println("early done", val)
 			return
 		}
 	}
 
+	fmt.Printf("Time taken: %v\n", time.Since(now))
 BREAKER:
 	select {
 	case <-ctx.Done():
@@ -72,11 +79,11 @@ BREAKER:
 		break BREAKER
 	}
 
-	val, err = takeUntilEnough(num, num != 0, localCfg, fullres...)
+	val, err = takeUntilEnough(num, num != 0, &localCfg, fullres...)
 	return
 }
 
-func takeUntilEnough[T any](total int, take bool, cfg globalConfig, res ...ExecutableOutput[T]) (uVals []T, err error) {
+func takeUntilEnough[T any](total int, take bool, cfg *globalConfig, res ...ExecutableOutput[T]) (uVals []T, err error) {
 	totalData := len(res)
 
 	if total != 0 {
