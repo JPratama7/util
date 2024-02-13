@@ -3,16 +3,20 @@ package hunch
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
-	"time"
 )
 
 func runner[T any](ctx context.Context, idx int, take bool, mut *sync.Mutex, wg *sync.WaitGroup, exec Executable[T], done chan<- int, data *ExecutableOutput[T]) {
 	defer func() {
+		// TODO: IMPROVE THIS
+		defer func() {
+			recover()
+		}()
+
 		wg.Done()
 		mut.Unlock()
 		done <- idx
+		close(done)
 	}()
 
 	v, err := exec(ctx)
@@ -26,7 +30,6 @@ func runner[T any](ctx context.Context, idx int, take bool, mut *sync.Mutex, wg 
 }
 
 func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, err error) {
-	now := time.Now()
 
 	wg := new(sync.WaitGroup)
 	mut := new(sync.Mutex)
@@ -41,6 +44,11 @@ func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, 
 		wg.Add(1)
 		go runner(ctx, i, num != 0, mut, wg, exec, earlyDone, &fullres[i])
 	}
+
+	defer func() {
+		earlyDone = nil
+		fullres = nil
+	}()
 
 	go func(wg *sync.WaitGroup, wgCh chan<- *struct{}) {
 		wg.Wait()
@@ -69,7 +77,6 @@ func run[T any](ctx context.Context, num int, execs ...Executable[T]) (val []T, 
 		}
 	}
 
-	fmt.Printf("Time taken: %v\n", time.Since(now))
 BREAKER:
 	select {
 	case <-ctx.Done():
