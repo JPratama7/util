@@ -55,7 +55,7 @@ func RandomStringCustom(n int, elems string) string {
 			cache, remain = src.Int63(), letterIdxMax
 		}
 		if idx := int(cache & letterIdxMask); idx < len(elems) {
-			b[i] = letterBytes[idx]
+			b[i] = elems[idx]
 			i--
 		}
 		cache >>= letterIdxBits
