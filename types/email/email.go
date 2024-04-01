@@ -9,18 +9,37 @@ import (
 	"reflect"
 )
 
-type emailAlias = mail.Address
-
 type Address struct {
-	emailAlias
+	m mail.Address
+}
+
+func FromNetMail(a mail.Address) Address {
+	return Address{
+		m: a,
+	}
+}
+
+func ParseAddress(addr string) (*Address, error) {
+	r, e := mail.ParseAddress(addr)
+	if e != nil {
+		return nil, e
+	}
+
+	return &Address{
+		m: *r,
+	}, nil
 }
 
 func (a Address) MarshalJSON() ([]byte, error) {
-	if a.Address == "" {
+	if a.m.Address == "" {
 		return nil, &json.MarshalerError{
 			Type: reflect.TypeOf(a),
 			Err:  errors.New("email: address is empty"),
 		}
+	}
+
+	if _, err := mail.ParseAddress(a.m.Address); err != nil {
+		return nil, err
 	}
 
 	byteBuilder := new(bytes.Buffer)
@@ -28,13 +47,16 @@ func (a Address) MarshalJSON() ([]byte, error) {
 		byteBuilder.Reset()
 	}()
 
-	byteBuilder.Grow(len(a.Name) + len(a.Address) + 3)
+	byteBuilder.Grow(len(a.m.Name) + len(a.m.Address) + 3)
 
-	if a.Name != "" {
-		byteBuilder.WriteString(a.Name + " ")
+	if a.m.Name != "" {
+		byteBuilder.WriteString(a.m.Name)
+		byteBuilder.WriteRune(' ')
 	}
 
-	byteBuilder.WriteString("<" + a.Address + ">")
+	byteBuilder.WriteRune('<')
+	byteBuilder.WriteString(a.m.Address)
+	byteBuilder.WriteRune('>')
 
 	return byteBuilder.Bytes(), nil
 }
@@ -52,8 +74,12 @@ func (a *Address) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	a.Name = e.Name
-	a.Address = e.Address
+	a.m.Name = e.Name
+	a.m.Address = e.Address
 
 	return nil
+}
+
+func (a Address) String() string {
+	return a.m.String()
 }
