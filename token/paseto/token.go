@@ -21,7 +21,7 @@ func (p PASETO) Encode(id string) (string, error) {
 
 }
 
-func (p PASETO) EncodeWithStruct(id string, data any, privateKey string) (string, error) {
+func (p PASETO) EncodeWithStruct(id string, data any) (string, error) {
 	if !types.IsPointer(data) {
 		return "", fmt.Errorf("data must be a pointer")
 	}
@@ -37,7 +37,7 @@ func (p PASETO) EncodeWithStruct(id string, data any, privateKey string) (string
 		return "", err
 	}
 
-	secretKey, err := paseto.NewV4AsymmetricSecretKeyFromHex(privateKey)
+	secretKey, err := paseto.NewV4AsymmetricSecretKeyFromHex(p.Private)
 	return token.V4Sign(secretKey, nil), err
 
 }

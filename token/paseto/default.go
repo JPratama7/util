@@ -11,7 +11,7 @@ func Encode(id string, privateKey string) (string, error) {
 }
 
 func EncodeWithStruct[T any](id string, data *T, privateKey string) (string, error) {
-	return NewPASETO("", privateKey).EncodeWithStruct(id, data, privateKey)
+	return NewPASETO("", privateKey).EncodeWithStruct(id, data)
 }
 
 func EncodeWithStructDuration[T any](id string, data *T, privateKey string, dur ...time.Duration) (string, error) {
