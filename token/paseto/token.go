@@ -8,20 +8,19 @@ import (
 	"time"
 )
 
-func (p PASETO) Encode(id string) (string, error) {
+func (p PASETO) Encode(key, val string) (string, error) {
 	token := paseto.NewToken()
-
+	secretKey, err := paseto.NewV4AsymmetricSecretKeyFromHex(p.Private)
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
 	token.SetExpiration(time.Now().Add(p.Duration))
-	token.SetString("id", id)
+	token.SetString(key, val)
 
-	secretKey, err := paseto.NewV4AsymmetricSecretKeyFromHex(p.Private)
 	return token.V4Sign(secretKey, nil), err
 
 }
 
-func (p PASETO) EncodeWithStruct(id string, data any) (string, error) {
+func (p PASETO) EncodeWithStruct(key string, data any) (string, error) {
 	if !types.IsPointer(data) {
 		return "", fmt.Errorf("data must be a pointer")
 	}
@@ -30,9 +29,8 @@ func (p PASETO) EncodeWithStruct(id string, data any) (string, error) {
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
 	token.SetExpiration(time.Now().Add(p.Duration))
-	token.SetString("id", id)
 
-	err := token.Set("data", data)
+	err := token.Set(key, data)
 	if err != nil {
 		return "", err
 	}
@@ -42,7 +40,7 @@ func (p PASETO) EncodeWithStruct(id string, data any) (string, error) {
 
 }
 
-func (p PASETO) EncodeWithStructDuration(id string, data any, dur ...time.Duration) (string, error) {
+func (p PASETO) EncodeWithStructDuration(key string, data any, dur ...time.Duration) (string, error) {
 	duration := p.Duration
 	if len(dur) > 0 {
 		duration = dur[0]
@@ -52,9 +50,8 @@ func (p PASETO) EncodeWithStructDuration(id string, data any, dur ...time.Durati
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
 	token.SetExpiration(time.Now().Add(duration))
-	token.SetString("id", id)
 
-	err := token.Set("data", data)
+	err := token.Set(key, data)
 	if err != nil {
 		return "", err
 	}
