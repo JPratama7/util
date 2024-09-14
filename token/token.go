@@ -79,5 +79,5 @@ func (p *Paseto) Decrypt(token string) (*paseto.Token, error) {
 
 type Token interface {
 	Decrypt(token string) (*paseto.Token, error)
-	Encrypt(options ...TokenArgs) string
+	Encrypt(options ...TokenArgs) (string, error)
 }
