@@ -12,7 +12,7 @@ func GenerateConfig() fiber.Config {
 	config := fiber.Config{
 		JSONDecoder:  gojson.Unmarshal,
 		JSONEncoder:  gojson.Marshal,
-		ErrorHandler: ErrHandler,
+		ErrorHandler: DefaultHandler,
 	}
 
 	if os.Getenv("DEV") == "true" {
